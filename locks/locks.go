@@ -5,12 +5,11 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/Vishal2002/kv_server/client"
-	"github.com/Vishal2002/kv_server/rpc"
+	"github.com/Vishal2002/kv_server/kvsrv"
 )
 
 type Lock struct {
-	ck       *client.Clerk
+	ck       *kvsrv.Clerk
 	lockKey  string
 	clientID string
 }
@@ -21,7 +20,7 @@ func generateRandom() string {
 	return fmt.Sprintf("%d", code)
 }
 
-func MakeLock(ck *client.Clerk, lockKey string) *Lock {
+func MakeLock(ck *kvsrv.Clerk, lockKey string) *Lock {
 	return &Lock{
 		ck:       ck,
 		lockKey:  lockKey,
@@ -38,7 +37,7 @@ func (lk *Lock) Acquire() {
 			return
 		}
 
-		if getErr == rpc.ErrNoKey || (getErr == nil && value == "") {
+		if getErr == kvsrv.ErrNoKey || (getErr == nil && value == "") {
 			// Lock appears free; try to claim it
 			putVersion := 0
 			if getErr == nil {
@@ -51,7 +50,7 @@ func (lk *Lock) Acquire() {
 				return
 			}
 
-			if putErr == rpc.ErrMaybe {
+			if putErr == kvsrv.ErrMaybe {
 				// Ambiguous; check if we now hold it
 				checkValue, _, checkErr := lk.ck.Get(lk.lockKey)
 				if checkErr == nil && checkValue == lk.clientID {
@@ -71,7 +70,7 @@ func (lk *Lock) Release() {
 		// Get current lock state
 		value, version, err := lk.ck.Get(lk.lockKey)
 
-		if err == rpc.ErrNoKey {
+		if err == kvsrv.ErrNoKey {
 			// Lock doesn't exist, nothing to release
 			return
 		}
@@ -84,7 +83,7 @@ func (lk *Lock) Release() {
 
 			// Try to release by putting empty value with current version
 			putErr := lk.ck.Put(lk.lockKey, "", version)
-			if putErr == nil || putErr == rpc.ErrMaybe {
+			if putErr == nil || putErr == kvsrv.ErrMaybe {
 				// Successfully released (or maybe released)
 				return
 			}

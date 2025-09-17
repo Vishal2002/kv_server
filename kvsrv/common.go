@@ -1,4 +1,4 @@
-package rpc
+package kvsrv
 
 import "errors"
 
@@ -9,6 +9,13 @@ var (
 	ErrMaybe   = errors.New("operation may or may not have been executed")
 )
 
+// Error strings for RPC transmission
+const (
+	ErrNoKeyStr   = "key does not exist"
+	ErrVersionStr = "version mismatch"
+	ErrMaybeStr   = "operation may or may not have been executed"
+)
+
 // RPC request/response structures
 type PutArgs struct {
 	Key     string
@@ -17,7 +24,7 @@ type PutArgs struct {
 }
 
 type PutReply struct {
-	Err error
+	Err string // Changed from error to string
 }
 
 type GetArgs struct {
@@ -27,5 +34,5 @@ type GetArgs struct {
 type GetReply struct {
 	Value   string
 	Version int
-	Err     error
+	Err     string // Changed from error to string
 }
